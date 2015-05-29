@@ -204,7 +204,7 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 							if ($ifp){
 								fwrite($ifp, "<?php\n");
 								fwrite($ifp, "\n");
-								fwrite($ifp, "define('TEMP_PATH', sys_get_temp_dir());\n");
+								fwrite($ifp, "define('TEMP_PATH', sys_get_temp_dir() . '/');\n");
 								fwrite($ifp, "define('ADAPT_PATH', \$_SERVER['DOCUMENT_ROOT'] . '/adapt/');\n");
 								fwrite($ifp, "define('FRAMEWORK_PATH', ADAPT_PATH . 'frameworks/');\n");
 								fwrite($ifp, "define('EXTENSION_PATH', ADAPT_PATH . 'extensions/');\n");
