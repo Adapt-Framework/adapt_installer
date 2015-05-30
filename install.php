@@ -229,9 +229,81 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 								fclose($ifp);
 							}
 						}
+						
+						unlink($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt.bundle");
 					}
 					
-					/* Download and install any other bundles required */
+					/*
+					 * We need to install the bundles listed in $bundles_to_install
+					 */
+					foreach($bundles_to_install as $bundle){
+						/* Because we do not yet know the type we are just going to pop it into frameworks and move it later */
+						$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}.bundle", "w");
+						if ($fp){
+							fwrite($fp, file_get_contents("http://repo.adaptframework.com/adapt/bundles/{$bundle}.bundle"));
+							fclose($fp);
+						}
+						
+						/****/
+						if (file_exists($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}.bundle")){
+							/* We have the bundle so now we need to unbundle it */
+							$bfp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}.bundle", "r");
+							
+							if ($bfp){
+								$manifest = fgets($bfp);
+								$manifest = json_decode($manifest, true);
+								
+								if ($manifest && is_array($manifest)){
+									mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}");
+									
+									foreach($manifest as $file){
+										
+										$path_parts = explode('/', trim(dirname($file['name']), '/'));
+										$new_path = $_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}";
+										foreach($path_parts as $p){
+											$new_path .= "/{$p}";
+											if (!is_dir($new_path)){
+												mkdir($new_path);
+											}
+										}
+										
+										$path = $_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}/" . dirname($file['name']);
+										$path = trim($path, ".");
+										//if (!is_dir($path)){
+										//	mkdir($path);
+										//}
+										$ofp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}/" . $file['name'], "w");
+										if ($ofp){
+											fwrite($ofp, fread($bfp, $file['length']));
+											fclose($ofp);
+										}
+										
+									}
+									
+									
+								}
+								
+								fclose($bfp);
+								
+								/* Lets read the type from the bundles manifest */
+								$manifest = file_get_contents($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}/manifest.xml");
+								if ($manifest){
+									$matches = array();
+									if (preg_match("/<type>(application|extension|template|framework)<\/type>/", $manifest, $matches)){
+										
+										if ($matches[1] != 'framework'){
+											//print "mv {$_SERVER['DOCUMENT_ROOT']}/adapt/frameworks/{$bundle} {$_SERVER['DOCUMENT_ROOT']}/adapt/{$matches[0]}s/.";
+											//exec("mv {$_SERVER['DOCUMENT_ROOT']}/adapt/frameworks/{$bundle} {$_SERVER['DOCUMENT_ROOT']}/adapt/{$matches[0]}s/.");
+											rename("{$_SERVER['DOCUMENT_ROOT']}/adapt/frameworks/{$bundle}", "{$_SERVER['DOCUMENT_ROOT']}/adapt/{$matches[1]}s/{$bundle}");
+										}
+									}
+								}
+							}
+						}
+						/****/
+						
+						unlink($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/{$bundle}.bundle");
+					}
 					
 					/* Redirect to set up */
 					print "<script type=\"text/javascript\">window.location = '/';</script>";
