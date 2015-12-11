@@ -179,6 +179,9 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 							
 							if ($manifest && is_array($manifest)){
 								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt");
+								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt/static");
+								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt/static/js");
+								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt/static/css");
 								
 								foreach($manifest as $file){
 									$path = $_SERVER['DOCUMENT_ROOT'] . "/adapt/frameworks/adapt/" . dirname($file['name']);
@@ -224,7 +227,11 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 								fwrite($ifp, "RewriteEngine	On\n");
 								fwrite($ifp, "RewriteRule	^(adapt)($|/) - [L]\n");
 								fwrite($ifp, "RewriteCond	%{REQUEST_FILENAME} !index.php\n");
-								fwrite($ifp, "RewriteRule	.*	index.php?url=\$0	[QSA,L]\n");
+								fwrite($ifp, "RewriteRule	.*	index.php?url=\$0	[QSA,L]\n\n");
+								fwrite($ifp, "<Files ~\"\\.xml$\">\n");
+								fwrite($ifp, "Order allow,deny\n");
+								fwrite($ifp, "Deny from all>\n");
+								fwrite($ifp, "</Files>\n");
 								
 								fclose($ifp);
 							}
