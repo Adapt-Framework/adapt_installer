@@ -8,7 +8,7 @@ $bundles_to_install = array('adapt_setup');
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
 
-$repository_url = "http://dev2.matt.wales/api";
+$repository_url = "https://repository.adaptframework.com/v1";
 
 
 ?><!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.0 Transitional//EN">
@@ -162,10 +162,8 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 					/* Lets create the directories for the bundles */
 					mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt");
 					
-					$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/.htaccess");
+					$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/.htaccess", "w");
 					if ($fp !== false){
-						fwrite($fp, "RewriteEngine On\n");
-						fwrite($fp, "RewriteRule .* rewrite_test [QSA,L]\n");
 						fwrite($fp, "<Files ~ \"\\.(xml)$\">\n");
 						fwrite($fp, "deny from all\n");
 						fwrite($fp, "</Files>\n");
@@ -184,11 +182,9 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 					
 					/* Create the file store */
 					mkdir($_SERVER['DOCUMENT_ROOT'] . '/adapt/store');
-					mkdir($_SERVER['DOCUMENT_ROOT'] . '/adapt/store/private');
-					mkdir($_SERVER['DOCUMENT_ROOT'] . '/adapt/store/public');
 					
 					/* Create a .htaccess file for the private store */
-					$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/store/private/.htaccess", "w");
+					$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/store/.htaccess", "w");
 					if ($fp !== false){
 						fwrite($fp, "deny from all\n");
 					}
@@ -197,8 +193,8 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 					/* Lets download Adapt */
 					$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt.bundle", "w");
 					if ($fp){
-						fwrite($fp, file_get_contents($repository_url . "/bundles/adapt/latest/download"));
-						fclose($fp);
+                                            fwrite($fp, file_get_contents($repository_url . "/bundles/bundle/adapt/latest/download"));
+                                            fclose($fp);
 					}
 					
 					if (file_exists($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt.bundle")){
@@ -215,20 +211,21 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 								foreach($manifest as $file){
 									
 									if ($file['name'] == "bundle.xml"){
-										/* We need to get the framework version */
-										$matches = array();
-										$xml = fread($bfp, $file['length']);
-										
-										if (preg_match_all("/<version>(\d+(\.\d+)?(\.\d+)?)+<\/version>/", $xml, $matches)){
-											$bundle_version = $matches[1][0];
-										}
+                                                                            /* We need to get the framework version */
+                                                                            $matches = array();
+                                                                            $xml = fread($bfp, $file['length']);
+
+                                                                            if (preg_match_all("/<version>(\d+(\.\d+)?(\.\d+)?)+<\/version>/", $xml, $matches)){
+                                                                                $bundle_version = $matches[1][0];
+                                                                            }
 									}else{
-										/* Just to seek the file forward */
+                                                                            /* Just to seek the file forward */
+                                                                            if ($file['length']){
 										fread($bfp, $file['length']);
+                                                                            }
 									}
 								}
 								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt");
-								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}");
 								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}");
 								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}/static");
 								mkdir($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}/static/js");
@@ -245,7 +242,7 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 									$path = $_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}/" . dirname($file['name']);
 									$path = trim($path, ".");
 									if (!is_dir($path)){
-										mkdir($path);
+                                                                            make_dir($path);
 									}
 									$ofp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/adapt/adapt-{$bundle_version}/" . $file['name'], "w");
 									if ($ofp){
@@ -254,7 +251,6 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 									}
 									
 								}
-								
 								
 							}
 							
@@ -285,9 +281,9 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 								fwrite($ifp, "RewriteRule	.*	index.php?url=\$0	[QSA,L]\n\n");
 								fwrite($ifp, "<Files ~\"\\.xml$\">\n");
 								fwrite($ifp, "Order allow,deny\n");
-								fwrite($ifp, "Deny from all>\n");
+								fwrite($ifp, "Deny from all\n");
 								fwrite($ifp, "</Files>\n");
-								fwrite($fp, "Options -Indexes\n");
+								fwrite($ifp, "Options -Indexes\n");
 								
 								fclose($ifp);
 							}
@@ -303,7 +299,7 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 						/* Because we do not yet know the type we are just going to pop it into the adapt root and move it later */
 						$fp = fopen($_SERVER['DOCUMENT_ROOT'] . "/adapt/{$bundle}.bundle", "w");
 						if ($fp){
-							fwrite($fp, file_get_contents($repository_url . "/bundles/{$bundle}/latest/download"));
+							fwrite($fp, file_get_contents($repository_url . "/bundles/bundle/{$bundle}/latest/download"));
 							fclose($fp);
 						}
 						
@@ -387,6 +383,23 @@ if (!preg_match("/Apache/", $_SERVER['SERVER_SOFTWARE'])){
 	}
 	
 	
+}
+
+function make_dir($dir){
+    if (!is_string($dir) || !strlen($dir) > 0){
+        return false;
+    }
+
+    $path = '/';
+    $parts = explode('/', $dir);
+    foreach($parts as $part){
+        $path .= $part . "/";
+        if (!is_dir($path)){
+            mkdir($path);
+        }
+    }
+
+    return true;
 }
 
 ?>
